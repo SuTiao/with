@@ -1,14 +1,19 @@
 package com.sutiao.app.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sutiao.app.constant.UserConstant;
 import com.sutiao.app.pojo.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/utils")
@@ -16,7 +21,7 @@ public class utilsController {
     private static boolean using = false;
     private static long NOT_AUTHORIZED = -1;
     private static long REALITY_CAPTURE_IS_USING = -1;
-    private static String uploadPath = "C:\\";
+    private static String uploadPath = "C:\\Users\\田志隐\\Desktop\\test";
     private boolean authorized(HttpServletRequest request){
         Object s = request.getSession().getAttribute(UserConstant.User_LOGIN_STATE);
         User user = (User) s;
@@ -28,9 +33,9 @@ public class utilsController {
 
     @PostMapping("/realitycapture")
     public long callRealityCapture(HttpServletRequest request, HttpServletResponse response, @RequestParam("files") MultipartFile[] files) throws IOException, InterruptedException {
-        if(!authorized(request)){
-            return NOT_AUTHORIZED;
-        }
+//        if(!authorized(request)){
+//            return NOT_AUTHORIZED;
+//        }
         if(using){
             return REALITY_CAPTURE_IS_USING;
         }
@@ -42,20 +47,42 @@ public class utilsController {
                 saveAddress.mkdirs();// 如果文件夹不存在 创建保存文件对应的文件夹
             }
             // 将上传的文件保存到指定路径
-            file.transferTo(new File(uploadPath + fileName));
+            file.transferTo(new File(uploadPath + "\\" + fileName));
         }
         String batPath = "C:\\Program Files\\Capturing Reality\\RealityCapture\\a.bat";
         Runtime runtime = Runtime.getRuntime();
         Process process = runtime.exec(batPath);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line;
-        while ((line = reader.readLine()) != null){
-            System.out.println(line);
-        }
-        int exitCode = process.waitFor();
-        System.out.println("脚本执行完毕，退出码: " + exitCode);
+//        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+//        String line;
+//        while ((line = reader.readLine()) != null){
+//            System.out.println(line);
+//        }
+//        int exitCode = process.waitFor();
+//        System.out.println("脚本执行完毕，退出码: " + exitCode);
         UUID uuid = UUID.randomUUID();
-        String filePath = "D:/" + uuid + ".fbx";
+//        String filePath = "D:/" + uuid + ".obj";
+//        response.setContentType("application/octet-stream");
+//        response.setCharacterEncoding("UTF-8");
+//        response.setHeader("Content-Disposition", "attachment;filename=" + uuid + ".obj");
+//        try {
+//            FileInputStream fileInputStream = new FileInputStream(filePath);
+//            OutputStream outputStream = response.getOutputStream();
+//            byte[] buffer = new byte[4096];
+//            int bytesRead;
+//            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+//                outputStream.write(buffer, 0, bytesRead);
+//            }
+//            fileInputStream.close();
+//            outputStream.close();
+//        }
+//        catch (Exception ignored){}
+        using = false;
+        return Long.parseLong(String.valueOf(uuid));
+    }
+
+    @GetMapping("/getobj")
+    public void getobj(@RequestParam("uuid") long uuid, HttpServletResponse response){
+        String filePath = "D:/" + uuid + ".obj";
         response.setContentType("application/octet-stream");
         response.setCharacterEncoding("UTF-8");
         response.setHeader("Content-Disposition", "attachment;filename=" + uuid + ".obj");
@@ -71,10 +98,26 @@ public class utilsController {
             outputStream.close();
         }
         catch (Exception ignored){}
-        using = false;
-        return Long.parseLong(String.valueOf(uuid));
     }
 
-
+    @GetMapping("/getpng")
+    public void getpng(@RequestParam("uuid") long uuid, HttpServletResponse response){
+        String filePath = "D:/" + uuid + ".png";
+        response.setContentType("application/octet-stream");
+        response.setCharacterEncoding("UTF-8");
+        response.setHeader("Content-Disposition", "attachment;filename=" + uuid + ".png");
+        try {
+            FileInputStream fileInputStream = new FileInputStream(filePath);
+            OutputStream outputStream = response.getOutputStream();
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            fileInputStream.close();
+            outputStream.close();
+        }
+        catch (Exception ignored){}
+    }
 
 }
